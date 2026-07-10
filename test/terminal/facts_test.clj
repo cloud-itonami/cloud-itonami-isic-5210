@@ -6,10 +6,10 @@
   (is (some? (facts/spec-basis "JPN")))
   (is (string? (:provenance (facts/spec-basis "JPN")))))
 
-(deftest all-four-seeded-jurisdictions-have-a-legal-basis
+(deftest all-eight-seeded-jurisdictions-have-a-legal-basis
   ;; every seeded terminal-storage jurisdiction actually has a real
   ;; official legal-basis reported honestly here
-  (doseq [iso3 ["JPN" "USA" "GBR" "NOR"]]
+  (doseq [iso3 ["JPN" "USA" "GBR" "NOR" "IND" "SAU" "ARE" "MEX"]]
     (is (some? (:legal-basis (facts/spec-basis iso3))) (str iso3 " legal-basis"))
     (is (string? (:legal-basis (facts/spec-basis iso3))) (str iso3 " legal-basis is a string"))))
 

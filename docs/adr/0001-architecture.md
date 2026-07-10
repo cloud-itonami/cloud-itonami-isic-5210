@@ -202,6 +202,28 @@ hiccup can never auto-commit storage or auto-transfer custody.
 - `blueprint.edn` required no field-sync fixes -- the `:maturity` flip itself
   is the only change from the originally-published scaffold.
 
+## Addendum: IND/SAU/ARE/MEX jurisdiction extension
+
+`terminal.facts/catalog` grows from 4 to 8 seeded jurisdictions: India,
+Saudi Arabia, UAE and Mexico added alongside the original JPN/USA/GBR/
+NOR, each with a real owner-authority/legal-basis/provenance citation
+-- same schema, no new fields. One honesty note worth recording: the
+UAE entry's primary citation (Abu Dhabi DoE Fuel Storage Tanks
+Regulations 2023) was verified by direct full-text extraction to cover
+overfill protection (§3.7) and API-653-aligned tank-integrity
+inspection (§3.9.5-3.9.7), but that text did NOT confirm explicit
+bonding-and-grounding language -- rather than silently claim full
+coverage from one document, the ARE entry's `:legal-basis` cites a
+SECOND document (the UAE Fire and Life Safety Code of Practice) for
+that sub-requirement, the same "don't overstate a single citation"
+discipline `retailops`/4711's and `freightops`/4920's own addenda
+apply to SAU/MEX.
+
+Every new entry's `:provenance` URL resolves to an official government
+domain (`peso.gov.in`, `sbc.gov.sa`, `doe.gov.ae`, `dof.gob.mx`),
+verified by direct web research at extension time, never carried over
+from training-data recall alone.
+
 ## References
 
 - `cloud-itonami-isic-6511/docs/adr/0001-architecture.md` (origin of the
@@ -219,3 +241,7 @@ hiccup can never auto-commit storage or auto-transfer custody.
 - Control of Major Accident Hazards Regulations 2015 (UK, HSE / Environment Agency, post-Buncefield)
 - Facilities Regulations (Innretninger); Framework Regulations (Rammeforskriftenen) (Norway, Petroleum Safety Authority)
 - The Buncefield incident (2005) as the originating overfill-type major accident the COMAH 2015 / API 2350 regimes exist to prevent.
+- Petroleum Act, 1934 + Petroleum Rules, 2002 (India, PESO)
+- HCIS Safety & Fire Protection Directives; Saudi Building Code Fire Protection Requirements, SBC 801 (Saudi Arabia)
+- DoE Fuel Storage Tanks Regulations 2023; UAE Fire and Life Safety Code of Practice (UAE)
+- NOM-006-ASEA-2017, Seguridad en Almacenamiento Terrestre de Petrolíferos (Mexico, ASEA)

@@ -22,6 +22,24 @@
   the two physical facts the governor's overfill-risk and tank-integrity-
   assessment-stale checks are ultimately grounded in.
 
+  Also seeded: India's Petroleum and Explosives Safety Organisation
+  (PESO) under the Petroleum Rules 2002 (tank/vehicle bonding-and-
+  earthing during loading/unloading, dip-rod/overfill safety
+  procedure); Saudi Arabia's High Commission for Industrial Security
+  (HCIS) Safety & Fire Protection Directives plus the Saudi Building
+  Code Fire Protection Requirements (SBC 801, storage-tank hot-work/
+  separation provisions); the UAE's Department of Energy - Abu Dhabi
+  Fuel Storage Tanks Regulations 2023 (overfill protection §3.7,
+  API-653-aligned tank-integrity inspection §3.9.5-3.9.7 -- this
+  regulation's own extracted text did NOT confirm explicit bonding/
+  grounding language, so that sub-requirement is grounded instead in
+  the complementary UAE Fire and Life Safety Code of Practice, cited
+  honestly as a second document rather than folded silently into the
+  first); and Mexico's ASEA (Agencia Nacional de Seguridad Industrial y
+  de Protección al Medio Ambiente del Sector Hidrocarburos) under
+  NOM-006-ASEA-2017 (storage-terminal mechanical-integrity/overfill/
+  grounding, API 653/570-aligned).
+
   Coverage is reported HONESTLY (see `coverage`), the same discipline
   every sibling actor's `facts` namespace uses: a jurisdiction not in
   this table has NO spec-basis, full stop -- the advisor must not
@@ -58,6 +76,34 @@
           :owner-authority "Petroleum Safety Authority Norway (PSA)"
           :legal-basis "Facilities Regulations; Framework Regulations"
           :provenance "https://www.ptil.no/en/regulations/"
+          :required-evidence ["tank inspection record (API 653 equivalent)"
+                              "overfill-prevention system test"
+                              "bonding-grounding confirmation"]}
+   "IND" {:name "IND"
+          :owner-authority "Petroleum and Explosives Safety Organisation (PESO), Department for Promotion of Industry and Internal Trade (DPIIT)"
+          :legal-basis "Petroleum Act, 1934 + Petroleum Rules, 2002 (tank/vehicle bonding-and-earthing, dip-rod/overfill safety procedure)"
+          :provenance "https://www.peso.gov.in/en/petroleum-rules-2002"
+          :required-evidence ["tank inspection record (API 653 equivalent)"
+                              "overfill-prevention system test"
+                              "bonding-grounding confirmation"]}
+   "SAU" {:name "SAU"
+          :owner-authority "الهيئة العليا للأمن الصناعي (High Commission for Industrial Security, HCIS), Ministry of Interior / Saudi Building Code National Committee"
+          :legal-basis "HCIS Safety & Fire Protection Directives (SAF-01, storage-tank venting/overfill/bonding-grounding requirements); Saudi Building Code Fire Protection Requirements (SBC 801)"
+          :provenance "https://sbc.gov.sa/En/BC/Pages/BuildingCode/BCDetails.aspx?codeId=801&year=2024"
+          :required-evidence ["tank inspection record (API 653 equivalent)"
+                              "overfill-prevention system test"
+                              "bonding-grounding confirmation"]}
+   "ARE" {:name "ARE"
+          :owner-authority "Department of Energy - Abu Dhabi (DoE) / Dubai Civil Defence"
+          :legal-basis "DoE Fuel Storage Tanks Regulations 2023 (Doc. DoE/ED/R01/005) -- overfill protection and API-653-aligned tank-integrity inspection; UAE Fire and Life Safety Code of Practice (bonding-and-grounding/fire-protection provisions for flammable-liquid storage)"
+          :provenance "https://www.doe.gov.ae/-/media/Project/DOE/Department-Of-Energy/Media-Center-Publications/2023_08_01-DoE-Fuel-Storage-Tanks-Regulations--QMS-Final.pdf"
+          :required-evidence ["tank inspection record (API 653 equivalent)"
+                              "overfill-prevention system test"
+                              "bonding-grounding confirmation"]}
+   "MEX" {:name "MEX"
+          :owner-authority "Agencia Nacional de Seguridad Industrial y de Protección al Medio Ambiente del Sector Hidrocarburos (ASEA)"
+          :legal-basis "NOM-006-ASEA-2017, Seguridad en Almacenamiento Terrestre de Petrolíferos"
+          :provenance "https://www.dof.gob.mx/nota_detalle.php?codigo=5533266&fecha=27/07/2018"
           :required-evidence ["tank inspection record (API 653 equivalent)"
                               "overfill-prevention system test"
                               "bonding-grounding confirmation"]}})

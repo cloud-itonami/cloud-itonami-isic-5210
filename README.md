@@ -206,12 +206,20 @@ repo's flagship ops already establish.
 
 `terminal.facts/coverage` reports how many requested jurisdictions
 actually have an official spec-basis in `terminal.facts/catalog` --
-currently 4 seeded (JPN, USA, GBR, NOR) out of ~194 jurisdictions
-worldwide. This is a starting catalog to prove the governor contract
-end-to-end, not a claim of global coverage. Adding a jurisdiction is
-additive: one map entry in `terminal.facts/catalog`, citing a real
-official source -- never fabricate a jurisdiction's requirements to
-make coverage look bigger.
+currently 8 seeded (JPN, USA, GBR, NOR, IND, SAU, ARE, MEX) out of
+~194 jurisdictions worldwide. This is a starting catalog to prove the
+governor contract end-to-end, not a claim of global coverage. Adding a
+jurisdiction is additive: one map entry in `terminal.facts/catalog`,
+citing a real official source -- never fabricate a jurisdiction's
+requirements to make coverage look bigger. Two honesty notes on the
+newest four: SAU's citation is the HCIS storage-tank safety directive
+plus the Saudi Building Code (SBC 801); ARE's citation pairs the Abu
+Dhabi DoE Fuel Storage Tanks Regulations 2023 (overfill + API-653-
+aligned inspection, verified by direct text extraction) with the
+separate UAE Fire and Life Safety Code of Practice for bonding-and-
+grounding, since the DoE regulation's own text did not confirm
+explicit bonding/grounding language -- reported as two documents
+rather than folded silently into one.
 
 ## Maturity
 

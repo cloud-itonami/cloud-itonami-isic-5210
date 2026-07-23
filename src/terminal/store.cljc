@@ -36,10 +36,9 @@
   audit trail a regulator, a custodian, or an operator trusting a
   terminal-storage actor needs, and the evidence an operator needs if
   a commit or a transfer is later disputed."
-  (:require #?(:clj  [clojure.edn :as edn]
-               :cljs [cljs.reader :as edn])
-            [terminal.registry :as registry]
-            [langchain.db :as d]))
+  (:require [terminal.registry :as registry]
+            [langchain.db :as d]
+            [langchain-store.core :as ls]))
 
 (defprotocol Store
   (terminal-stock [s id])
@@ -214,9 +213,6 @@
    :commit-sequence/jurisdiction  {:db/unique :db.unique/identity}
    :transfer-sequence/jurisdiction {:db/unique :db.unique/identity}})
 
-(defn- enc [v] (pr-str v))
-(defn- dec* [s] (when s (edn/read-string s)))
-
 ;; Every terminal-stock field is stored as its own Datomic attr so a governor
 ;; pull reads the exact ground truth (no blob decode). Boolean fields
 ;; are coerced on read so a missing attr reads back as false (parity
@@ -269,21 +265,21 @@
          (map #(pull->terminal-stock (d/pull (d/db conn) terminal-stock-pull [:terminal-stock/id %])))
          (sort-by :id)))
   (assessment-of [_ terminal-stock-id]
-    (dec* (d/q '[:find ?p . :in $ ?tsid
+    (ls/dec* (d/q '[:find ?p . :in $ ?tsid
                 :where [?a :assessment/terminal-stock-id ?tsid] [?a :assessment/payload ?p]]
               (d/db conn) terminal-stock-id)))
   (ledger [_]
     (->> (d/q '[:find ?s ?f :where [?e :ledger/seq ?s] [?e :ledger/fact ?f]] (d/db conn))
          (sort-by first)
-         (mapv (comp dec* second))))
+         (mapv (comp ls/dec* second))))
   (act1-history [_]
     (->> (d/q '[:find ?s ?r :where [?e :commit/seq ?s] [?e :commit/record ?r]] (d/db conn))
          (sort-by first)
-         (mapv (comp dec* second))))
+         (mapv (comp ls/dec* second))))
   (act2-history [_]
     (->> (d/q '[:find ?s ?r :where [?e :transfer/seq ?s] [?e :transfer/record ?r]] (d/db conn))
          (sort-by first)
-         (mapv (comp dec* second))))
+         (mapv (comp ls/dec* second))))
   (next-commit-sequence [_ jurisdiction]
     (or (d/q '[:find ?n . :in $ ?j
               :where [?e :commit-sequence/jurisdiction ?j] [?e :commit-sequence/next ?n]]
@@ -304,7 +300,7 @@
       (d/transact! conn [(terminal-stock->tx value)])
 
       :receipt-assessment/set
-      (d/transact! conn [{:assessment/terminal-stock-id (first path) :assessment/payload (enc payload)}])
+      (d/transact! conn [{:assessment/terminal-stock-id (first path) :assessment/payload (ls/enc payload)}])
 
       :tank/mark-committed
       (let [terminal-stock-id (first path)
@@ -314,7 +310,7 @@
         (d/transact! conn
                      [(terminal-stock->tx (assoc tank-patch :id terminal-stock-id))
                       {:commit-sequence/jurisdiction jurisdiction :commit-sequence/next next-n}
-                      {:commit/seq (count (act1-history s)) :commit/record (enc (get result "record"))}])
+                      {:commit/seq (count (act1-history s)) :commit/record (ls/enc (get result "record"))}])
         result)
 
       :tank/mark-transferred
@@ -325,12 +321,12 @@
         (d/transact! conn
                      [(terminal-stock->tx (assoc tank-patch :id terminal-stock-id))
                       {:transfer-sequence/jurisdiction jurisdiction :transfer-sequence/next next-n}
-                      {:transfer/seq (count (act2-history s)) :transfer/record (enc (get result "record"))}])
+                      {:transfer/seq (count (act2-history s)) :transfer/record (ls/enc (get result "record"))}])
         result)
       nil)
     s)
   (append-ledger! [s fact]
-    (d/transact! conn [{:ledger/seq (count (ledger s)) :ledger/fact (enc fact)}])
+    (d/transact! conn [{:ledger/seq (count (ledger s)) :ledger/fact (ls/enc fact)}])
     fact)
   (with-terminal-stocks [s terminal-stocks]
     (when (seq terminal-stocks) (d/transact! conn (mapv terminal-stock->tx (vals terminal-stocks)))) s))

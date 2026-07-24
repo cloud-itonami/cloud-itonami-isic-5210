@@ -145,3 +145,46 @@
 
 (defn evidence-checklist [iso3]
   (:required-evidence (spec-basis iso3) []))
+
+;; ─────────── Downstream Cross-Actor Handoff (optional, isic-5210 -> e.g. isic-5224/isic-5229) ───────────
+;;
+;; `:custody/transfer` proposals MAY OPTIONALLY carry a `:handoff` record
+;; under the proposal's `:value` when this terminal actor transfers custody
+;; of a committed tank stock to a downstream custodian (pipeline batch out,
+;; tanker loading, refinery rundown handover -- e.g. cloud-itonami-isic-5224
+;; cargo-handling or cloud-itonami-isic-5229 downstream). Reuses the SAME
+;; `:handoff/*` wire shape the fleet's other `:handoff`-linked actors already
+;; use (ADR-2607177600 / ADR-2800000500 / ADR-2800000800 / ADR-2800000700).
+;; A `:handoff` here is OPTIONAL, not required: this actor's custody-
+;; transfer proposals worked before this field existed and keep working
+;; unchanged with no `:handoff` attached at all.
+;;
+;;   {:handoff/id "..."
+;;    :handoff/source-actor "cloud-itonami-isic-5210"
+;;    :handoff/batch-id "..."
+;;    :handoff/product-type-id :some/keyword-or-string
+;;    :handoff/quantity-kg 120.5
+;;    :handoff/dispatched-at-iso "..."
+;;    :handoff/cold-chain-temp-min-c 2.0     ; OPTIONAL, pass-through only
+;;    :handoff/cold-chain-temp-max-c 10.0    ; OPTIONAL, pass-through only
+;;    :handoff/unspsc-code "..."             ; OPTIONAL, pass-through only
+;;    :handoff/gtin "..."                    ; OPTIONAL, pass-through only
+;;    :handoff/carrier-actor "cloud-itonami-isic-4920"        ; OPTIONAL, pass-through only
+;;    :handoff/carrier-tracking-ref "..."}                    ; OPTIONAL, pass-through only
+
+(defn handoff-record-well-formed?
+  "Positive-sense convenience predicate: does `handoff` carry every
+  REQUIRED `:handoff/*` field (id/source-actor/batch-id/product-type-id/
+  quantity-kg/dispatched-at-iso) with a plausible value (quantity-kg a
+  positive number, the string fields non-blank)? Never validates the
+  OPTIONAL cold-chain/unspsc/gtin/carrier fields."
+  [handoff]
+  (boolean
+   (and (map? handoff)
+        (seq (:handoff/id handoff))
+        (seq (:handoff/source-actor handoff))
+        (seq (:handoff/batch-id handoff))
+        (some? (:handoff/product-type-id handoff))
+        (number? (:handoff/quantity-kg handoff))
+        (pos? (:handoff/quantity-kg handoff))
+        (seq (:handoff/dispatched-at-iso handoff)))))

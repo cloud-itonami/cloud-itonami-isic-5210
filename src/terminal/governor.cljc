@@ -27,10 +27,10 @@
   actor architecture (langgraph StateGraph + independent Governor +
   Phase 0->3 rollout) established by `cloud-itonami-isic-6511`.
 
-  Six checks, in priority order, ALL HARD violations: a human approver
-  CANNOT override them. The confidence/actuation gate is SOFT: it asks
-  a human to look (low confidence / actuation), and the human may
-  approve -- but see `terminal.phase`: for `:stake :storage/commit`/
+  Seven checks, in priority order, ALL HARD violations: a human approver
+  CANNOT override them. The confidence/actuation gate (item 8 below) is
+  SOFT: it asks a human to look (low confidence / actuation), and the
+  human may approve -- but see `terminal.phase`: for `:stake :storage/commit`/
   `:custody/transfer` (a real commit or transfer) NO phase ever allows
   auto-commit either. Two independent layers agree that actuation is
   always a human call.
@@ -69,7 +69,12 @@
                                        confirmed before receipt/transfer
                                        (static-electricity ignition
                                        control).
-    7. Confidence floor / actuation
+    7. `:custody/transfer` carrying an OPTIONAL `:handoff` record
+       (downstream to e.g. cloud-itonami-isic-5224 or
+       cloud-itonami-isic-5229) that IS present but malformed --
+       absence of `:handoff` is never itself a violation, only a
+       present-but-malformed one is (ADR-2800002100).
+    8. Confidence floor / actuation
        gate                          -- LLM confidence below threshold,
                                        OR the op is `:storage/commit`/
                                        `:custody/transfer` (REAL acts)
@@ -204,6 +209,18 @@
       [{:rule :already-transfer
         :detail (str subject " は既に引渡済み")}])))
 
+(defn- handoff-malformed-violations
+  "HARD, but ONLY when a :handoff map is actually present under the
+  proposal's :value -- its ABSENCE is never itself a violation, since
+  attaching a :handoff to a :custody/transfer proposal is entirely
+  optional (per ADR-2800002100)."
+  [{:keys [op]} proposal]
+  (when (= op :custody/transfer)
+    (let [handoff (get-in proposal [:value :handoff])]
+      (when (and (some? handoff) (not (facts/handoff-record-well-formed? handoff)))
+        [{:rule :handoff-malformed
+          :detail "custody/transfer提案に添付された:handoffレコードが必須フィールド(id/source-actor/batch-id/product-type-id/quantity-kg/dispatched-at-iso)を欠く、または数量が正の数でない"}]))))
+
 (defn check
   "Censors a TerminalAdvisor proposal against the governor rules.
   Returns {:ok? bool :violations [..] :confidence c :escalate? bool
@@ -217,7 +234,8 @@
                            (tank-integrity-assessment-stale-violations request st)
                            (bonding-grounding-unconfirmed-violations request st)
                            (already-commit-violations request st)
-                           (already-transfer-violations request st)))
+                           (already-transfer-violations request st)
+                           (handoff-malformed-violations request proposal)))
         conf (:confidence proposal 0.0)
         low? (< conf confidence-floor)
         stakes? (boolean (high-stakes (:stake proposal)))

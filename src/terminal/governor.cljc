@@ -69,6 +69,15 @@
                                        confirmed before receipt/transfer
                                        (static-electricity ignition
                                        control).
+    7b. INBOUND receipt handoff -- a tank record carrying an OPTIONAL
+       `:receipt/handoff` (terminal.facts) that is PRESENT but
+       malformed, or present and well-formed but with no
+       `:handoff/carrier-tracking-ref` to make the delivery claim
+       checkable against the carrier's own leg record. Absence is
+       never a violation. This is the RECEIVING half of the same
+       reference whose sending half is item 7 below: check 3 refuses a
+       commit whose POD is unconfirmed, and this makes the POD's
+       attribution auditable instead of an unattributed boolean.
     7. `:custody/transfer` carrying an OPTIONAL `:handoff` record
        (downstream to e.g. cloud-itonami-isic-5224 or
        cloud-itonami-isic-5229) that IS present but malformed --
@@ -79,6 +88,17 @@
                                        OR the op is `:storage/commit`/
                                        `:custody/transfer` (REAL acts)
                                        -> escalate.
+
+  ONE SOFT signal, `:soft-violations` (never a hold, escalates only):
+  an inbound `:receipt/handoff` that is well-formed AND traceable but
+  names a `:handoff/carrier-actor` this terminal does not have on its
+  roster (`terminal.facts/inbound-carrier-actors`). A terminal cannot
+  know every haulier in the world, so an unregistered carrier is not
+  grounds to refuse -- but a receipt attributed to one is exactly the
+  claim an operator should look at before it becomes inventory. This
+  mirrors `cloud-itonami-isic-5229`'s `:storage-handoff-suspect`
+  (ADR-2800002100), which is the same actor-pair reference seen from
+  the other end.
 
   Two more guards, double-commit/double-transfer prevention, are
   enforced but NOT listed as numbered HARD checks above because they
@@ -190,6 +210,64 @@
         [{:rule :bonding-grounding-unconfirmed
           :detail (str subject " は結束・アース(bonding/grounding)が未確認 -- 静電気着火リスクのため在庫計上提案は進められない")}]))))
 
+(defn- inbound-handoff-violations
+  "HARD, but ONLY when the target tank actually carries a
+  `:receipt/handoff`. Its ABSENCE is never a violation -- a pipeline
+  receipt from a directly connected refinery has no carrier leg at all,
+  and every tank predates this field.
+
+  Two distinct failures, reported separately so the operator is told
+  which one to fix:
+
+    :inbound-handoff-malformed   -- not the `:handoff/*` wire shape
+    :inbound-handoff-untraceable -- well-formed, but no
+                                    `:handoff/carrier-tracking-ref`, so
+                                    there is no way to say WHICH leg the
+                                    receipt rests on. Same reasoning
+                                    `cloud-itonami-isic-4920`'s own
+                                    check 8 uses for the carrier side of
+                                    this identical reference.
+
+  Evaluated for the two acts that put the receipt beyond recall
+  (`:receipt/verify` reads it, `:storage/commit` books it) -- there is
+  no point holding a `:tank/intake` over the attribution of a delivery
+  nobody has claimed yet."
+  [{:keys [op subject]} st]
+  (when (contains? #{:receipt/verify :storage/commit} op)
+    (let [w (store/terminal-stock st subject)
+          handoff (:receipt/handoff w)]
+      (when (some? handoff)
+        (cond
+          (not (facts/handoff-record-well-formed? handoff))
+          [{:rule :inbound-handoff-malformed
+            :detail (str subject " の:receipt/handoffが必須フィールド"
+                         "(id/source-actor/batch-id/product-type-id/quantity-kg/dispatched-at-iso)"
+                         "を欠く、または数量が正の数でない")}]
+
+          (not (facts/inbound-handoff-traceable? handoff))
+          [{:rule :inbound-handoff-untraceable
+            :detail (str subject " の:receipt/handoffに:handoff/carrier-tracking-refが無い -- "
+                         "どの輸送レグに基づく受領なのか特定できないため、"
+                         "POD(着荷確認)の主張を検証できない")}])))))
+
+(defn- inbound-carrier-unknown-escalation
+  "SOFT -- the handoff is well-formed and traceable, but names a carrier
+  outside `terminal.facts/inbound-carrier-actors`. Escalates, never
+  holds."
+  [{:keys [op subject]} st]
+  (when (contains? #{:receipt/verify :storage/commit} op)
+    (let [w (store/terminal-stock st subject)
+          handoff (:receipt/handoff w)]
+      (when (and (some? handoff)
+                 (facts/handoff-record-well-formed? handoff)
+                 (facts/inbound-handoff-traceable? handoff)
+                 (not (facts/inbound-carrier-known?
+                       (:handoff/carrier-actor handoff))))
+        [{:rule :inbound-carrier-unknown
+          :detail (str subject " の受領は未登録の運送事業者 "
+                       (pr-str (:handoff/carrier-actor handoff))
+                       " に帰属している -- 拒否はしないが、在庫計上の前に人が見るべき")}]))))
+
 (defn- already-commit-violations
   "For `:storage/commit`, refuses to commit the SAME tank twice, off a
   dedicated `:committed?` fact (never a `:status` value)."
@@ -223,8 +301,13 @@
 
 (defn check
   "Censors a TerminalAdvisor proposal against the governor rules.
-  Returns {:ok? bool :violations [..] :confidence c :escalate? bool
-  :high-stakes? bool :hard? bool}."
+  Returns {:ok? bool :violations [..] :soft-violations [..]
+  :confidence c :escalate? bool :high-stakes? bool :hard? bool}.
+
+  `:soft-violations` is an additional, independently-detected concern
+  that is NOT grounds for a hold but DOES force `:escalate?` true even
+  when every hard check passes -- same effect as low confidence, kept in
+  a separate key so `:violations` keeps its original meaning."
   [request _context proposal st]
   (let [hard (into []
                    (concat (spec-basis-violations request proposal)
@@ -235,17 +318,21 @@
                            (bonding-grounding-unconfirmed-violations request st)
                            (already-commit-violations request st)
                            (already-transfer-violations request st)
-                           (handoff-malformed-violations request proposal)))
+                           (handoff-malformed-violations request proposal)
+                           (inbound-handoff-violations request st)))
+        soft (into [] (inbound-carrier-unknown-escalation request st))
         conf (:confidence proposal 0.0)
         low? (< conf confidence-floor)
         stakes? (boolean (high-stakes (:stake proposal)))
-        hard? (boolean (seq hard))]
-    {:ok?          (and (not hard?) (not low?) (not stakes?))
-     :violations   hard
-     :confidence   conf
-     :hard?        hard?
-     :escalate?    (and (not hard?) (or low? stakes?))
-     :high-stakes? stakes?}))
+        hard? (boolean (seq hard))
+        soft? (boolean (seq soft))]
+    {:ok?             (and (not hard?) (not low?) (not stakes?) (not soft?))
+     :violations      hard
+     :soft-violations soft
+     :confidence      conf
+     :hard?           hard?
+     :escalate?       (and (not hard?) (or low? stakes? soft?))
+     :high-stakes?    stakes?}))
 
 (defn hold-fact
   "The audit fact written when a proposal is rejected (HOLD)."

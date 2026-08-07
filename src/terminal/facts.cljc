@@ -188,3 +188,81 @@
         (number? (:handoff/quantity-kg handoff))
         (pos? (:handoff/quantity-kg handoff))
         (seq (:handoff/dispatched-at-iso handoff)))))
+
+;; ─────────── Inbound Cross-Actor Handoff (isic-4920 etc. -> isic-5210, THIS actor as RECEIVER) ───────────
+;;
+;; The section above is this actor as the SENDER (a `:custody/transfer`
+;; may attach a `:handoff` for a downstream custodian). This section is
+;; the other half: a tank's `terminal-stock` record MAY OPTIONALLY carry
+;; a `:receipt/handoff` -- the SAME `:handoff/*` wire shape -- naming the
+;; carrier whose leg delivered the receipt this tank is about to book.
+;;
+;; ## Why the receiving half is needed
+;;
+;; `terminal.governor` check 3 (`receipt-pod-chain-broken`) refuses a
+;; `:storage/commit` whose upstream proof-of-delivery is unconfirmed. It
+;; reads ONE boolean, `:receipt-confirmed?`. That boolean answers 'was
+;; the delivery confirmed?' with a self-assertion and records NOTHING
+;; about which carrier, which leg, or which tracking reference it rests
+;; on -- so an auditor asking 'confirmed by whom, against what?' has
+;; nowhere to look. The receipt is booked into the tank's book-of-record
+;; on the strength of an unattributed flag.
+;;
+;; `:receipt/handoff` is where the attribution goes. It does NOT replace
+;; `:receipt-confirmed?` and does not make the POD check softer -- it
+;; makes the claim CHECKABLE, by naming the carrier and the tracking
+;; reference an auditor can take to that carrier's own leg record.
+;;
+;; ## The corroboration is by reference, never by call
+;;
+;; `cloud-itonami-isic-4920` independently logs a `:transport-leg/log`
+;; record against a `:handoff/carrier-tracking-ref` -- a THIRD-PARTY
+;; confirmation it physically carried the leg (superproject
+;; ADR-2800000700). This actor NEVER queries that actor: zero shared
+;; code, zero shared store, zero API call, the same asymmetric-optional
+;; design every cross-actor reference in this fleet uses. Each side
+;; validates its own half. What this actor validates is that the
+;; attribution it was handed is well-formed and traceable; whether the
+;; leg was really carried is 4920's half, on 4920's ledger.
+;;
+;;   {:handoff/id "..."
+;;    :handoff/source-actor "cloud-itonami-jsic-4721"   ; who shipped it
+;;    :handoff/batch-id "..."
+;;    :handoff/product-type-id :some/keyword-or-string
+;;    :handoff/quantity-kg 120.5
+;;    :handoff/dispatched-at-iso "..."
+;;    :handoff/carrier-actor "cloud-itonami-isic-4920"  ; who carried it
+;;    :handoff/carrier-tracking-ref "..."}              ; which leg
+;;
+;; Absence of `:receipt/handoff` is COMPLETELY NORMAL and is never a
+;; violation: every tank worked before this field existed and keeps
+;; working unchanged without it (a pipeline receipt from a directly
+;; connected refinery has no carrier leg at all). The checks below only
+;; ever fire on a handoff that is actually present -- the same
+;; present-but-malformed discipline the outbound `:handoff` check
+;; already uses.
+
+(def inbound-carrier-actors
+  "Which carrier actors this terminal recognizes as a legitimate
+  `:handoff/carrier-actor` for an inbound receipt. A carrier outside
+  this set is not rejected outright -- the terminal cannot know every
+  haulier in the world -- but it IS escalated to a human, because a
+  receipt attributed to an unregistered carrier is exactly the claim an
+  operator should look at before it becomes inventory."
+  #{"cloud-itonami-isic-4920"})
+
+(defn inbound-carrier-known?
+  "Positive-sense predicate: is `carrier-actor` one of this terminal's
+  actually-registered carriers? A nil carrier always returns false --
+  absence is never silently treated as known."
+  [carrier-actor]
+  (boolean (contains? inbound-carrier-actors carrier-actor)))
+
+(defn inbound-handoff-traceable?
+  "Does `handoff` carry the `:handoff/carrier-tracking-ref` that makes
+  the delivery claim checkable against the carrier's own leg record?
+  Without it there is no way to say WHICH leg the receipt rests on --
+  the same reasoning `cloud-itonami-isic-4920`'s own check 8 uses for
+  the carrier side of the identical reference."
+  [handoff]
+  (boolean (seq (:handoff/carrier-tracking-ref handoff))))

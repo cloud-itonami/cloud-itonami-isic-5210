@@ -113,7 +113,61 @@
               :integrity-assessment-current? true :gauge-verified? true
               :bonding-grounding-confirmed? false
               :committed? false :custody-transferred? false
-              :jurisdiction "JPN" :status :intake}}})
+              :jurisdiction "JPN" :status :intake}
+    ;; ── inbound cross-actor handoff fixtures (terminal.facts) ──
+    ;; Everything else on these three is CLEAN, so each isolates exactly one
+    ;; inbound-handoff failure mode. tank-7 is the happy path: a receipt whose
+    ;; POD is attributed to a registered carrier and a traceable leg.
+    "tank-7" {:id "tank-7" :tank-id "T-701" :product-grade "crude-light"
+              :volume-barrels 200000 :receipt-confirmed? true
+              :tank-level-pct 40.0 :ullage-barrels 300000
+              :planned-receipt-barrels 100000
+              :integrity-assessment-current? true :gauge-verified? true
+              :bonding-grounding-confirmed? true
+              :committed? false :custody-transferred? false
+              :jurisdiction "JPN" :status :intake
+              :receipt/handoff {:handoff/id "ho-7"
+                                :handoff/source-actor "cloud-itonami-jsic-4721"
+                                :handoff/batch-id "b-7"
+                                :handoff/product-type-id :crude/light
+                                :handoff/quantity-kg 120.5
+                                :handoff/dispatched-at-iso "2026-08-07T00:00:00Z"
+                                :handoff/carrier-actor "cloud-itonami-isic-4920"
+                                :handoff/carrier-tracking-ref "CTR-7"}}
+    ;; well-formed and traceable, but the carrier is not on this terminal's
+    ;; roster -> SOFT escalation, never a hold.
+    "tank-8" {:id "tank-8" :tank-id "T-801" :product-grade "crude-light"
+              :volume-barrels 200000 :receipt-confirmed? true
+              :tank-level-pct 40.0 :ullage-barrels 300000
+              :planned-receipt-barrels 100000
+              :integrity-assessment-current? true :gauge-verified? true
+              :bonding-grounding-confirmed? true
+              :committed? false :custody-transferred? false
+              :jurisdiction "JPN" :status :intake
+              :receipt/handoff {:handoff/id "ho-8"
+                                :handoff/source-actor "cloud-itonami-jsic-4721"
+                                :handoff/batch-id "b-8"
+                                :handoff/product-type-id :crude/light
+                                :handoff/quantity-kg 90.0
+                                :handoff/dispatched-at-iso "2026-08-07T00:00:00Z"
+                                :handoff/carrier-actor "com-example-unregistered-haulier"
+                                :handoff/carrier-tracking-ref "CTR-8"}}
+    ;; well-formed but NOT traceable (no carrier-tracking-ref) -> HARD.
+    "tank-9" {:id "tank-9" :tank-id "T-901" :product-grade "crude-light"
+              :volume-barrels 200000 :receipt-confirmed? true
+              :tank-level-pct 40.0 :ullage-barrels 300000
+              :planned-receipt-barrels 100000
+              :integrity-assessment-current? true :gauge-verified? true
+              :bonding-grounding-confirmed? true
+              :committed? false :custody-transferred? false
+              :jurisdiction "JPN" :status :intake
+              :receipt/handoff {:handoff/id "ho-9"
+                                :handoff/source-actor "cloud-itonami-jsic-4721"
+                                :handoff/batch-id "b-9"
+                                :handoff/product-type-id :crude/light
+                                :handoff/quantity-kg 77.0
+                                :handoff/dispatched-at-iso "2026-08-07T00:00:00Z"
+                                :handoff/carrier-actor "cloud-itonami-isic-4920"}}}})
 
 ;; ----------------------------- shared commit logic -----------------------------
 
@@ -234,12 +288,23 @@
    [:jurisdiction :terminal-stock/jurisdiction false]
    [:status :terminal-stock/status false]
    [:commit-number :terminal-stock/commit-number false]
-   [:transfer-number :terminal-stock/transfer-number false]])
+   [:transfer-number :terminal-stock/transfer-number false]
+   ;; INBOUND cross-actor handoff (terminal.facts). A nested map, so it is
+   ;; stored as an EDN string BLOB -- the 4th element marks that.
+   ;;
+   ;; It MUST live here and not only on MemStore: a governor check that reads
+   ;; a field the Datomic backend silently drops is a check that stops firing
+   ;; when the SSoT is swapped, and nothing would say so. `store_contract_test`
+   ;; asserts the round trip on BOTH backends for exactly that reason
+   ;; (the same bug was found live in cloud-itonami-isic-5229 on 2026-08-06,
+   ;; where :shipment/handoff was missing from its field spec and had made
+   ;; ADR-2800002100's gate dead on Datomic).
+   [:receipt/handoff :terminal-stock/receipt-handoff false true]])
 
 (defn- terminal-stock->tx [w]
-  (reduce (fn [tx [k attr _bool?]]
+  (reduce (fn [tx [k attr _bool? blob?]]
             (let [v (get w k)]
-              (cond-> tx (some? v) (assoc attr v))))
+              (cond-> tx (some? v) (assoc attr (if blob? (ls/enc v) v)))))
           {:terminal-stock/id (:id w)}
           terminal-stock-fields))
 
@@ -247,12 +312,13 @@
 
 (defn- pull->terminal-stock [m]
   (when (:terminal-stock/id m)
-    (reduce (fn [w [k attr bool?]]
+    (reduce (fn [w [k attr bool? blob?]]
               (let [v (get m attr)]
                 (cond
                   bool?        (assoc w k (boolean v))
-                  (some? v)    (assoc w k v)
-                  :else        w)))
+                  (nil? v)     w
+                  blob?        (assoc w k (ls/dec* v))
+                  :else        (assoc w k v))))
             {:id (:terminal-stock/id m)}
             terminal-stock-fields)))
 

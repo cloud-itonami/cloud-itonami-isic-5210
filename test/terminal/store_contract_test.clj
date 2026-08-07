@@ -24,7 +24,8 @@
       (is (false? (:bonding-grounding-confirmed? (store/terminal-stock s "tank-6"))) "tank-6 bonding unconfirmed")
       (is (false? (:committed? (store/terminal-stock s "tank-1"))))
       (is (false? (:custody-transferred? (store/terminal-stock s "tank-1"))))
-      (is (= ["tank-1" "tank-2" "tank-3" "tank-4" "tank-5" "tank-6"]
+      (is (= ["tank-1" "tank-2" "tank-3" "tank-4" "tank-5" "tank-6"
+              "tank-7" "tank-8" "tank-9"]
              (mapv :id (store/all-terminal-stocks s))))
       (is (nil? (store/assessment-of s "tank-1")))
       (is (= [] (store/ledger s)))
@@ -86,3 +87,30 @@
                                         :committed? false :custody-transferred? false
                                         :jurisdiction "JPN" :status :intake}})
     (is (= "T-X" (:tank-id (store/terminal-stock s "x"))))))
+
+;; ── inbound cross-actor handoff round-trip (terminal.facts) ──────────────────
+
+(deftest inbound-handoff-round-trips-on-both-backends
+  ;; `:receipt/handoff` is a nested map, so it is stored as an EDN blob. If a
+  ;; backend drops it, `terminal.governor`'s inbound checks silently stop
+  ;; firing THERE and nowhere says so -- the SSoT becomes a switch that turns
+  ;; a compliance check off. That exact bug was found live in
+  ;; cloud-itonami-isic-5229 on 2026-08-06, so it gets a test here first.
+  (doseq [[label s] [["MemStore" (store/seed-db)]
+                     ["DatomicStore" (store/datomic-seed-db)]]]
+    (testing label
+      (testing "a seeded handoff survives, field for field"
+        (let [h (:receipt/handoff (store/terminal-stock s "tank-7"))]
+          (is (map? h))
+          (is (= "ho-7" (:handoff/id h)))
+          (is (= "cloud-itonami-isic-4920" (:handoff/carrier-actor h)))
+          (is (= "CTR-7" (:handoff/carrier-tracking-ref h)))
+          (is (= 120.5 (:handoff/quantity-kg h)))
+          (is (= :crude/light (:handoff/product-type-id h))
+              "keyword values must survive the blob round trip, not become strings")))
+      (testing "a tank with no handoff reads back as nil, not as an empty map"
+        (is (nil? (:receipt/handoff (store/terminal-stock s "tank-1")))))
+      (testing "the untraceable fixture keeps its missing field missing"
+        (let [h (:receipt/handoff (store/terminal-stock s "tank-9"))]
+          (is (map? h))
+          (is (nil? (:handoff/carrier-tracking-ref h))))))))

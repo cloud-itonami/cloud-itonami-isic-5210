@@ -50,6 +50,92 @@ operator does not have to build the compliance layer from scratch.
 - support retainer with SLA
 - SCADA and custody-transfer integration
 
+| Package | Customer | Price shape |
+|---|---|---|
+| Self-host starter | depot / terminal superintendent | setup fee + optional support retainer |
+| Managed Starter | one inland distribution terminal or depot (5–20 tanks, 5–10 operators) | ¥60,000/月 flat |
+
+**Market-anchored (2026-08-10)**: benchmarked against 6 products, at an
+assumed size of one inland distribution terminal / depot with 5–20 tanks and
+5–10 operators. **This is the weakest-evidenced tier in the portfolio, and
+the number below is an extrapolation, not a market read.** Stated plainly:
+
+**Of the 4 products that actually sell terminal management (TAS/TMS), zero
+publish a monthly price.**
+
+- **Toptech Systems Load2day** (hosted TMS, SaaS) — 非公開. Even the
+  reseller store listing carries no real figure ("$0.00 per item /
+  Unavailable") —
+  <https://www.pft-alexander.com/store/p622/LOAD2DAY_Hosted_Terminal_Management_System.html>.
+- **Emerson TerminalManager / TerminalScheduler** — 非公開, no price table —
+  <https://www.emerson.com/en-us/automation/advanced-industry-software/oil-and-gas/terminal-management-system-terminal-manager>.
+- **Titan Cloud Software** (fuel / UST compliance) — 非公開 on the vendor
+  site (demo request only) — <https://www.titancloud.com/solutions/compliance/>.
+  A third-party review site quotes "$50–250/site/month", **but that is a
+  review-site estimate, not a vendor disclosure, so it is not used here.**
+- **Implico OpenTAS / OpenTAS GO / OpenTAS NG** — the only vendor-published
+  figure in the entire category, and **it is not a monthly price**. The
+  variants sheet gives a "Usual budget range per terminal starting at (incl.
+  implementation)" of "> 200 k" for OpenTAS, "IDT: >50 k / MRT: >100 k /
+  SPT: >100 k" for OpenTAS GO, and "> 50 k" for OpenTAS NG; GO and NG are
+  "Subscription SaaS". **No currency symbol is printed on the sheet** (Implico
+  GmbH is German, so EUR is a presumption, not a reading) —
+  <https://www.implico.com/wp-content/uploads/2023/09/OpenTAS-Variants_pricerange-EN.pdf>.
+  A one-time, implementation-inclusive budget floor cannot be converted to a
+  monthly fee without inventing an amortisation period, so it is **not**
+  converted here.
+
+The only published monthly figures obtainable are from the **adjacent**
+inspection / evidence-record layer, which is not a terminal management system:
+
+- **SafetyCulture** — Free $0/user/month (≤10), Premium $24/user/month
+  annual ($29/user/month monthly), Enterprise custom —
+  <https://safetyculture.com/pricing/>. At 8 users, ~¥150/$:
+  **¥28,800–34,800/月**.
+- **ConMas i-Reporter** (現場帳票・点検記録, 国内) — クラウド版 初期費用 55,000円 +
+  月額 42,000円〜/月 (5ユーザー); オンプレ サブスク 37,500円〜/月 —
+  <https://www.nextvision.co.jp/product/ireporter/products/price/>.
+  **¥42,000/月** at the assumed size.
+
+So the honest measured band is **¥28,800–42,000/月 for the evidence-record
+layer**, alongside a TAS-layer figure of ">50 k per terminal including
+implementation" that has no monthly equivalent.
+
+**¥60,000/月 is set at roughly 1.4× the top of the evidence-record band, and
+it is an extrapolation from an adjacent category rather than from a direct
+competitor.** The reasoning: this actor is deliberately *not* a TAS/SCADA —
+it does no tank gauging, no valve operation and no blending / dispatch
+scheduling (all explicitly out of R0 scope above) — so Implico's per-terminal
+five-figure implementation band prices a layer this software does not sell,
+and importing it would bill for capability that is not shipped. What this
+actor does sell is the evidence checklist plus a governed commit/transfer
+gate plus an audit ledger, which is the SafetyCulture / i-Reporter layer —
+except that a generic checklist tool does not adjudicate anything, whereas
+this governor structurally refuses an over-ullage receipt, a stale API 653
+integrity assessment, unconfirmed bonding-and-grounding, or a broken receipt
+POD chain as HOLDs **a human approver cannot override**. That justifies
+sitting above a generic checklist, and nowhere near the TAS band.
+
+**Confidence in this figure is low.** No direct competitor publishes a
+monthly price at all, so there is no band to sit inside — only a floor
+borrowed from a neighbouring product category. This number should be revised
+as soon as a real terminal-storage quote (won or lost) is observed; it should
+not be cited as a market-validated price.
+
+No portfolio-uniform ¥50,000–150,000/月 figure was inherited into this file,
+and none was introduced: that range was anchored on HR/recruiting/CRM per-seat
+SaaS and has no evidenced relationship to terminal-storage pricing. That
+¥60,000 happens to fall inside it is a coincidence of the extrapolation above,
+not a use of it.
+
+**Subscribe (2026-08-10)**: a live Stripe Payment Link for the Managed Starter
+tier (¥60,000/月 flat) is available now —
+[**subscribe to Managed Starter**](https://buy.stripe.com/5kQbJ21IbgZWe9OguueEo0m).
+This is a no-code Stripe-hosted checkout; nothing in this repo's actor code
+changed. **No terminal or depot operator has claimed or subscribed to this
+tier yet — this is a live, working checkout with zero paid tenants, not a
+claim of existing revenue.**
+
 ## The `:terminal-storage-governor` Decision Rule
 
 This blueprint's `:itonami.blueprint/governor` is `:terminal-storage-governor`.

@@ -30,7 +30,7 @@
   receipt to a storage tank or transferring custody itself (that is
   `terminal.operation`'s `:storage/commit`/`:custody/transfer`, always
   human-gated -- see README `Actuation`)."
-  (:require [clojure.string :as str]))
+  (:require [kotoba.lang.text :as str]))
 
 (defn- unsigned-certificate
   "Every certificate this actor produces is UNSIGNED -- signature is
@@ -95,7 +95,7 @@
     (throw (ex-info "storage-commit: jurisdiction required" {})))
   (when (< sequence 0)
     (throw (ex-info "storage-commit: sequence must be >= 0" {})))
-  (let [commit-number (str (str/upper-case jurisdiction) "-COMMIT-" (zero-pad sequence 6))
+  (let [commit-number (str (str/upper jurisdiction) "-COMMIT-" (zero-pad sequence 6))
         record {"record_id" commit-number
                 "kind" "storage-commit-draft"
                 "terminal_stock_id" terminal-stock-id
@@ -120,7 +120,7 @@
     (throw (ex-info "custody-transfer: jurisdiction required" {})))
   (when (< sequence 0)
     (throw (ex-info "custody-transfer: sequence must be >= 0" {})))
-  (let [transfer-number (str (str/upper-case jurisdiction) "-TRANSFER-" (zero-pad sequence 6))
+  (let [transfer-number (str (str/upper jurisdiction) "-TRANSFER-" (zero-pad sequence 6))
         record {"record_id" transfer-number
                 "kind" "custody-transfer-draft"
                 "terminal_stock_id" terminal-stock-id

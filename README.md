@@ -76,7 +76,7 @@ construction.** Two independent layers enforce this
 (`terminal.governor`'s `:storage/commit`/`:custody/transfer` high-stakes
 gate and `terminal.phase`'s phase table, which never puts either op in
 any phase's `:auto` set) -- see `terminal.phase`'s docstring and
-`test/terminal/phase_test.clj`'s `storage-commit-never-auto-at-any-
+`test/terminal/phase_test.cljk`'s `storage-commit-never-auto-at-any-
 phase`/`custody-transfer-never-auto-at-any-phase`. The actor may draft,
 check and recommend; a human depot / terminal superintendent is always
 the one who actually commits a receipt to inventory or transfers
@@ -173,14 +173,14 @@ robotics/identity/forms/dmn/bpmn/audit-ledger stack.
 
 | File | Role |
 |---|---|
-| `src/terminal/store.cljc` | **Store** protocol -- `MemStore` ‖ `DatomicStore` (`langchain.db`) + append-only audit ledger + commit AND transfer history (dual history). The double-actuation guard checks dedicated `:committed?`/`:custody-transferred?` booleans rather than a `:status` value |
-| `src/terminal/registry.cljc` | Commit/transfer draft records, plus the self-contained tank-overfill range-check pure function (`overfill-risk?`) the governor re-verifies against -- no external capability library to delegate to |
-| `src/terminal/facts.cljc` | Per-jurisdiction tank-overfill / tank-integrity / bonding-grounding catalog with an official spec-basis citation per entry, honest coverage reporting |
-| `src/terminal/terminaladvisor.cljc` | **TerminalAdvisor** -- `mock-advisor` ‖ `llm-advisor`; intake/receipt-verification/commit/transfer proposals |
-| `src/terminal/governor.cljc` | **Terminal Storage Governor** -- 6 HARD checks (spec-basis · evidence-incomplete · receipt-pod-chain-broken · overfill-risk, the fabrication value-vs-rated-limit discipline · tank-integrity-assessment-stale · bonding-grounding-unconfirmed) + 2 double-actuation guards + 1 soft (confidence/actuation gate) |
-| `src/terminal/phase.cljc` | **Phase 0→3** -- read-only → assisted intake → assisted verify → supervised (commit/transfer always human; tank intake is the ONLY auto-eligible op, no direct capital risk) |
-| `src/terminal/operation.cljc` | **OperationActor** -- langgraph StateGraph |
-| `src/terminal/sim.cljc` | demo driver |
+| `src/terminal/store.cljk` | **Store** protocol -- `MemStore` ‖ `DatomicStore` (`langchain.db`) + append-only audit ledger + commit AND transfer history (dual history). The double-actuation guard checks dedicated `:committed?`/`:custody-transferred?` booleans rather than a `:status` value |
+| `src/terminal/registry.cljk` | Commit/transfer draft records, plus the self-contained tank-overfill range-check pure function (`overfill-risk?`) the governor re-verifies against -- no external capability library to delegate to |
+| `src/terminal/facts.cljk` | Per-jurisdiction tank-overfill / tank-integrity / bonding-grounding catalog with an official spec-basis citation per entry, honest coverage reporting |
+| `src/terminal/terminaladvisor.cljk` | **TerminalAdvisor** -- `mock-advisor` ‖ `llm-advisor`; intake/receipt-verification/commit/transfer proposals |
+| `src/terminal/governor.cljk` | **Terminal Storage Governor** -- 6 HARD checks (spec-basis · evidence-incomplete · receipt-pod-chain-broken · overfill-risk, the fabrication value-vs-rated-limit discipline · tank-integrity-assessment-stale · bonding-grounding-unconfirmed) + 2 double-actuation guards + 1 soft (confidence/actuation gate) |
+| `src/terminal/phase.cljk` | **Phase 0→3** -- read-only → assisted intake → assisted verify → supervised (commit/transfer always human; tank intake is the ONLY auto-eligible op, no direct capital risk) |
+| `src/terminal/operation.cljk` | **OperationActor** -- langgraph StateGraph |
+| `src/terminal/sim.cljk` | demo driver |
 | `test/terminal/*_test.clj` | governor contract · phase invariants · store parity · registry conformance · facts coverage |
 
 ## Business-process coverage (honest)

@@ -133,7 +133,7 @@ settled?` shape.
 `terminal.store/Store` is implemented by both `MemStore` (atom-backed,
 default for dev/tests/demo) and `DatomicStore` (`langchain.db`-backed),
 proven to satisfy the same contract in
-`test/terminal/store_contract_test.clj`. The ledger stays append-only on
+`test/terminal/store_contract_test.cljk`. The ledger stays append-only on
 every backend: which tank had a receipt committed without a confirmed POD
 chain, which tank was committed past its ullage (a Buncefield-type
 overfill risk), which tank was committed with a stale API 653 integrity
@@ -193,7 +193,7 @@ hiccup can never auto-commit storage or auto-transfer custody.
   check, all discipline-reuse documented as such per
   `cloud-itonami-isic-0162` Decision 3.
 - `MemStore` || `DatomicStore` parity is proven by
-  `test/terminal/store_contract_test.clj`.
+  `test/terminal/store_contract_test.cljk`.
 - 36 tests / 181 assertions pass; lint is clean; the demo
   (`clojure -M:dev:run`) walks one clean commit + transfer lifecycle, plus
   seven HARD-hold scenarios (no spec-basis, receipt POD-chain broken,

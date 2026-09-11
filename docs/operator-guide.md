@@ -86,7 +86,7 @@ spec-basis, a commit started with incomplete evidence or past the ullage, an
 exception suppressed to force a commit through, or a transfer posted without a
 human sign-off.
 
-## Feel the Decision Gate: `clojure -M:dev:run`
+## Feel the Decision Gate: `kbb -M:dev:run`
 
 This vertical has no companion playable prototype yet (unlike the freight
 sibling's `itonami/freight-dispatch` game). The fastest hands-on way to feel

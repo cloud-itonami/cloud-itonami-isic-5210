@@ -331,7 +331,7 @@ jurisdiction's requirements to make coverage look bigger.
 ## Maturity
 
 `:implemented` -- `TerminalAdvisor` + `Terminal Storage Governor` run as real,
-tested code (`clojure -M:dev:test`: 36 tests / 181 assertions, 0 failures;
+tested code (`kbb -M:dev:test`: 36 tests / 181 assertions, 0 failures;
 lint clean), promoted from the originally-published `:blueprint`-tier
 scaffold, following the SAME governed-actor architecture as the other prior
 actors across this fleet, with its own distinct, independently-named governor

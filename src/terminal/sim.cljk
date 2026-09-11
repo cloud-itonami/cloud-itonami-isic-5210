@@ -1,5 +1,5 @@
 (ns terminal.sim
-  "Demo driver -- `clojure -M:dev:run`. Walks a clean tank through
+  "Demo driver -- `kbb -M:dev:run`. Walks a clean tank through
   intake -> receipt verification -> storage commit (escalate/
   approve/commit) -> custody transfer (escalate/approve/commit),
   then shows HARD-hold scenarios: a jurisdiction with no spec-basis,

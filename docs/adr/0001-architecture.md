@@ -195,7 +195,7 @@ hiccup can never auto-commit storage or auto-transfer custody.
 - `MemStore` || `DatomicStore` parity is proven by
   `test/terminal/store_contract_test.cljk`.
 - 36 tests / 181 assertions pass; lint is clean; the demo
-  (`clojure -M:dev:run`) walks one clean commit + transfer lifecycle, plus
+  (`kbb -M:dev:run`) walks one clean commit + transfer lifecycle, plus
   seven HARD-hold scenarios (no spec-basis, receipt POD-chain broken,
   overfill risk, API 653 integrity stale, bonding-grounding unconfirmed,
   double commit, double transfer), end-to-end.

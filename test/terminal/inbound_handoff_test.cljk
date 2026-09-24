@@ -10,7 +10,7 @@
   looser -- they make the attribution behind it CHECKABLE. So every test
   below is paired: the failure fires, and the clean case does not."
   (:require [kotoba.test :refer [deftest is testing]]
-            [clojure.set]
+            [kotoba.lang.coll]
             [terminal.governor :as governor]
             [terminal.facts :as facts]
             [terminal.store :as store]))
@@ -38,7 +38,7 @@
   with the handoff attribution under test."
   #{:inbound-handoff-malformed :inbound-handoff-untraceable})
 
-(defn- inbound [v] (clojure.set/intersection (rules v) inbound-rules))
+(defn- inbound [v] (kotoba.lang.coll/intersection (rules v) inbound-rules))
 (defn- soft-rules [v] (set (map :rule (:soft-violations v))))
 
 ;; ---------------------------------------------------------------- facts

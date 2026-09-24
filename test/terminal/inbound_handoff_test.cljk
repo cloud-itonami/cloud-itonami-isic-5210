@@ -9,7 +9,7 @@
   unattributed boolean. These checks do not make that check stricter or
   looser -- they make the attribution behind it CHECKABLE. So every test
   below is paired: the failure fires, and the clean case does not."
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [kotoba.test :refer [deftest is testing]]
             [clojure.set]
             [terminal.governor :as governor]
             [terminal.facts :as facts]

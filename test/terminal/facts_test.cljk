@@ -1,5 +1,5 @@
 (ns terminal.facts-test
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [kotoba.test :refer [deftest is testing]]
             [terminal.facts :as facts]))
 
 (deftest jpn-has-a-spec-basis

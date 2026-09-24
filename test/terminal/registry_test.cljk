@@ -1,5 +1,5 @@
 (ns terminal.registry-test
-  (:require [clojure.test :refer [deftest is]]
+  (:require [kotoba.test :refer [deftest is]]
             [terminal.registry :as r]))
 
 ;; ----------------------------- overfill range-check pure function -----------------------------

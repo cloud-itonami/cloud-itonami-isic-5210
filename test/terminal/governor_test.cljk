@@ -8,7 +8,7 @@
   check, ADR-2800002100) -- the existing 6 HARD checks + 2 double-
   actuation guards are already covered end-to-end by
   `governor-contract-test`."
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [kotoba.test :refer [deftest is testing]]
             [terminal.governor :as governor]
             [terminal.store :as store]
             [terminal.facts :as facts]))

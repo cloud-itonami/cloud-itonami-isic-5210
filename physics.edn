@@ -1,0 +1,32 @@
+;; What this vertical's robot physically does, declared for
+;; kotoba.robotics.process (kotoba-lang/robotics). `kbb -M:dev:physics` runs it.
+;;
+;; README "Robotics premise": an autonomous tank-gauging / valve robot
+;; performs the physical custody transfer and the receipt-manifold operation
+;; at a storage terminal / depot (ISIC 5210), gated by the independent
+;; Terminal Storage Governor. Physical work modelled here: the robot lines
+;; up a pipeline receipt through the manifold into a tank, and it opens the
+;; outlet valve of a day tank that gravity-feeds the loading rack.
+;;
+;; Every number without a cited source is marked `estimate` in its :basis.
+;; Replacing an estimate with a sourced value is this bot's growth work.
+{:physics/schema "itonami.physical-ai.spec.v1"
+ :repo "cloud-itonami/cloud-itonami-isic-5210"
+ :cases
+ [{:id :pipeline-receipt-manifold
+   :kind :pipe-flow
+   :procedure "valve robot lines up a gasoline pipeline receipt through 400 m of 250 mm manifold into the receiving tank, 18 m up to the top inlet"
+   :params {:diameter-m 0.25 :length-m 400.0 :roughness-m 4.5e-5 :density-kg-m3 740.0
+            :viscosity-pa-s 5.0e-4 :pump-efficiency 0.7 :elevation-m 18.0}
+   :sweep {:param :q-m3s :values [0.05 0.10 0.15 0.20 0.25]}
+   :quantity :pressure-drop-pa
+   :limit {:max 3.0e5 :basis "estimate: 3 bar of residual delivery pressure left at the terminal boundary after the transmission pipeline"}
+   :boundary {:lo 0.02 :hi 0.40}}
+  {:id :day-tank-to-loading-rack
+   :kind :tank-drain
+   :procedure "robot opens the outlet valve of a 10 m diameter day tank that gravity-feeds the truck loading rack, from 8 m down to 0.5 m"
+   :params {:tank-area-m2 78.54 :h0-m 8.0 :h-target-m 0.5 :cd 0.62 :dt-s 1.0 :max-time-s 86400.0}
+   :sweep {:param :orifice-area-m2 :values [0.00785 0.0177 0.0314 0.0491]}
+   :quantity :time-to-target-s
+   :limit {:max 7200.0 :basis "estimate: the day tank must be drawn down inside a 2-hour loading window"}
+   :boundary {:lo 0.005 :hi 0.06}}]}
